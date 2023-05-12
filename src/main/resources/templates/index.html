@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>오목게임</title>
+    <style>
+      /* 스타일링 예시 */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f2f2f2;
+        margin: 0;
+        padding: 0;
+      }
+      header {
+        background-color: #333;
+        color: #fff;
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-around;
+      }
+      header h1 {
+        margin: 0;
+      }
+      .lobby-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .lobby-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .status {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 20px;
+      }
+      section {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+      }
+      .user-list {
+        width: 40%;
+        margin-bottom: 20px;
+      }
+      .user-list-item {
+        margin: 10px;
+        padding: 8px;
+        border-bottom: 1px solid #ddd;
+      }
+      .chat-container {
+        width: 60%;
+        height: 300px;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow-y: scroll;
+        padding: 10px;
+        margin-bottom: 20px;
+      }
+      .message {
+        margin-bottom: 10px;
+      }
+      .chat-input {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+      }
+      .chat-button {
+        background-color: #4caf50;
+      }
+      .start-button {
+        background-color: #3c3ce7;
+      }
+      .cancel-button {
+        background-color: #e74c3c;
+      }
+      .login-button {
+        background-color: #000000;
+        padding: 10px;
+        color: #fff;
+      }
+      .button {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+        font-size: 16px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>오목게임</h1>
+      <span style="width: 130px">
+        <button id="login-button" class="login-button">
+          Login with GitHub
+        </button>
+      </span>
+    </header>
+    <main class="lobby-container">
+      <div class="status">매칭 상태: 대기 중</div>
+      <section>
+        <div class="chat-container">
+          <div class="message">Player 1: 안녕하세요?</div>
+          <div class="message">Player 2: 반갑습니다!</div>
+          <!-- 채팅 내용은 동적으로 추가되도록 JavaScript로 구현 가능 -->
+        </div>
+        <div class="user-list">
+          <h3>접속자 목록</h3>
+          <div class="user-list-item">
+            <span class="name">Player 1</span>
+            (<span class="win">0</span>승/ <span class="loss">0</span>패)
+          </div>
+          <div class="user-list-item">
+            <span class="name">Player 2</span>
+            (<span class="win">0</span>승/ <span class="loss">0</span>패)
+          </div>
+          <div class="user-list-item">
+            <span class="name">Player 3</span>
+            (<span class="win">0</span>승/ <span class="loss">0</span>패)
+          </div>
+          <!-- 접속자 목록은 동적으로 추가될 수 있습니다 -->
+        </div>
+      </section>
+      <input
+        type="text"
+        id="chat-input"
+        class="chat-input"
+        placeholder="메시지를 입력하세요"
+      />
+      <button id="send-button" class="button chat-button">전송</button>
+      <button id="start-button" class="button start-button">매칭 시작</button>
+      <button id="cancel-button" class="button cancel-button">매칭 취소</button>
+    </main>
+    <script>
+      //github 로그인 관련 파트
+      const loginBtn = document.querySelector("#loginBtn");
+      loginBtn.addEventListener("click", () => {
+        // 새 창을 엽니다.
+        const loginWindow = window.open(
+          "./login",
+          "Login",
+          "width=500,height=720"
+        );
+
+        // 새 창에서 쿠키가 설정되었는지 확인합니다.
+        setInterval(() => {
+          fetch("./hasUser")
+            .then((response) => response.json())
+            .then((data) => {
+              if (data) {
+                location.reload();
+              }
+            })
+            .catch((error) => console.error(error));
+        }, 1000);
+      });
+    </script>
+  </body>
+</html>
