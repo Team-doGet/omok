@@ -2,6 +2,9 @@
 <html>
   <head>
     <title>오목게임</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
     <style>
       /* 스타일링 예시 */
       body {
@@ -116,7 +119,7 @@
     <main class="lobby-container">
       <div class="status">매칭 상태: 대기 중</div>
       <section>
-        <div class="chat-container">
+        <div id="chatMessages" class="chat-container">
           <div class="message">Player 1: 안녕하세요?</div>
           <div class="message">Player 2: 반갑습니다!</div>
           <!-- 채팅 내용은 동적으로 추가되도록 JavaScript로 구현 가능 -->
@@ -138,17 +141,73 @@
           <!-- 접속자 목록은 동적으로 추가될 수 있습니다 -->
         </div>
       </section>
-      <input
-        type="text"
-        id="chat-input"
-        class="chat-input"
-        placeholder="메시지를 입력하세요"
-      />
-      <button id="send-button" class="button chat-button">전송</button>
+      <form id="chatForm">
+        <input
+          type="text"
+          id="chat-input"
+          class="chat-input"
+          placeholder="메시지를 입력하세요"
+        />
+        <button type="submit" id="send-button" class="button chat-button">
+          전송
+        </button>
+      </form>
       <button id="start-button" class="button start-button">매칭 시작</button>
       <button id="cancel-button" class="button cancel-button">매칭 취소</button>
     </main>
     <script>
+      var stompClient = null;
+
+      function connect() {
+        var socket = new SockJS("/chat");
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+          console.log("Connected: " + frame);
+          stompClient.subscribe("/topic/public", function (message) {
+            showMessage(JSON.parse(message.body));
+          });
+        });
+      }
+
+      function disconnect() {
+        if (stompClient !== null) {
+          stompClient.disconnect();
+        }
+        console.log("Disconnected");
+      }
+
+      function sendMessage() {
+        var messageInput = document.getElementById("chat-input");
+        var message = messageInput.value;
+        var sender = "User"; // 사용자명 설정
+        var chatMessage = {
+          content: message,
+          sender: sender,
+        };
+        stompClient.send(
+          "/app/chat.sendMessage",
+          {},
+          JSON.stringify(chatMessage)
+        );
+        messageInput.value = "";
+      }
+
+      function showMessage(message) {
+        var chatMessages = document.getElementById("chatMessages");
+        var p = document.createElement("p");
+        p.textContent = message.sender + ": " + message.content;
+        chatMessages.appendChild(p);
+      }
+
+      document
+        .getElementById("chatForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          sendMessage();
+        });
+
+      connect();
+
       //github 로그인 관련 파트
       const loginBtn = document.querySelector("#loginBtn");
       loginBtn.addEventListener("click", () => {
