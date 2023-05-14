@@ -1,12 +1,10 @@
 package site.doget.omok.socket;
 
 import lombok.Data;
-import java.time.LocalDateTime;
-
 @Data
-public class ChatMessage {
-
+public class UserInfo {
     private String content;
     private String sender;
-    private LocalDateTime time;
+    private String loss;
+    private String win;
 }
