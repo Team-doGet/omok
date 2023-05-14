@@ -7,15 +7,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 @CrossOrigin(origins = {"http://omok.doget.site","58.122.202.23:80"})
 public class Main {
-    @GetMapping("/")
+    @GetMapping("/index")
     public String getMain(){
         return "index";
     }
 
-    @GetMapping("/play")
-    public String getPlay(){
-        return "play";
-    }
+
 
     @GetMapping("chatting")
     public String getLogin(){
