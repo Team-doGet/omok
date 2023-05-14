@@ -64,5 +64,35 @@ public class ChatController {
         matchRequest.setTime(LocalDateTime.now());
         return matchRequest;
     }
+    @SendTo("/topic/match")
+    @MessageMapping("/lobby/match")
+    public MatchResponse matchRequest(@Payload MatchRequest matchRequest,UserInfo userInfo, SimpMessageHeaderAccessor headerAccessor) {
+        String userSessionId = headerAccessor.getSessionId();
+        // 매칭 신청한 유저를 큐에 추가
+        matchQueue.offer(userSessionId);
+        if (matchQueue.size() == 2) {
+            return createGameRoom(gameRoom++);
+        }
+        MatchResponse matchResponse = new MatchResponse();
+        matchRequest.setSender("system");
+        matchRequest.setTime(LocalDateTime.now());
+        return matchResponse;
+    }
+
+    private MatchResponse createGameRoom(int roomNumber) {
+        String playerSessionId1 = matchQueue.poll();
+        String playerSessionId2 = matchQueue.poll();
+
+        MatchResponse matchResponse = new MatchResponse();
+        matchResponse.setRoom(roomNumber);
+        matchResponse.setPlayer1(playerSessionId1);
+        matchResponse.setPlayer2(playerSessionId2);
+        matchResponse.setPlayerInfo1(userManager.getUser(playerSessionId1));
+        matchResponse.setPlayerInfo2(userManager.getUser(playerSessionId2));
+        matchResponse.setTime(LocalDateTime.now());
+        matchResponse.setSender("system");
+        matchResponse.setContent("경기가 시작됩니다.");
+        return matchResponse;
+    }
 }
 
