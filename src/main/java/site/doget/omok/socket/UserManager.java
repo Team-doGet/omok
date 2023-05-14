@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 @Component
 public class UserManager {
+
     private static final Map<String, UserInfo> users = new HashMap<>();
 
     // 접속자 정보 추가

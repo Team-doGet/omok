@@ -2,15 +2,20 @@ package site.doget.omok.socket;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import site.doget.omok.Game.Game;
 import site.doget.omok.Game.GameRepository;
 
+import javax.websocket.CloseReason;
+import javax.websocket.OnClose;
+import javax.websocket.Session;
 import java.time.LocalDateTime;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -20,12 +25,15 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @CrossOrigin(origins = {"http://omok.doget.site", "58.122.202.23:80"})
 public class ChatController {
 
-    @Autowired
-    private UserManager userManager;
+    private final UserManager userManager;
 
     @Autowired
     private GameRepository gameRepository;
     private final Queue<String> matchQueue = new ConcurrentLinkedQueue<>();
+
+    public ChatController(UserManager userManager) {
+        this.userManager = userManager;
+    }
 
     @MessageMapping("/lobby/join")
     @SendTo("/topic/chatParticipants")
@@ -38,11 +46,10 @@ public class ChatController {
         msg.setUserList(UserManager.getAllUserList());
         return msg;
     }
-
     @MessageMapping("/lobby/leave")
     @SendTo("/topic/chatParticipants")
     public UserListMessage leaveChat(UserInfo userInfo, SimpMessageHeaderAccessor headerAccessor) {
-        String username = userInfo.getSender();
+        System.out.println(headerAccessor);
         String userSessionId = headerAccessor.getSessionId();
         UserManager.removeUser(userSessionId);
         UserListMessage msg = new UserListMessage();
@@ -104,4 +111,3 @@ public class ChatController {
         return matchResponse;
     }
 }
-
