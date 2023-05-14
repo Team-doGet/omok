@@ -26,13 +26,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class ChatController {
 
     private final UserManager userManager;
-
-    @Autowired
-    private GameRepository gameRepository;
+    private final GameRepository gameRepository;
     private final Queue<String> matchQueue = new ConcurrentLinkedQueue<>();
 
-    public ChatController(UserManager userManager) {
+
+    public ChatController(UserManager userManager, GameRepository gameRepository) {
         this.userManager = userManager;
+        this.gameRepository = gameRepository;
     }
 
     @MessageMapping("/lobby/join")
@@ -75,7 +75,7 @@ public class ChatController {
 
     @SendTo("/topic/match")
     @MessageMapping("/lobby/match")
-    public MatchResponse matchRequest(@Payload MatchRequest matchRequest, UserInfo userInfo, SimpMessageHeaderAccessor headerAccessor) {
+    public MatchResponse matchRequest(@Payload MatchRequest matchRequest, SimpMessageHeaderAccessor headerAccessor) {
         String userSessionId = headerAccessor.getSessionId();
         // 매칭 신청한 유저를 큐에 추가
         matchQueue.offer(userSessionId);

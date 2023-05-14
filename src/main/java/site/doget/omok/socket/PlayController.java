@@ -44,14 +44,19 @@ public class PlayController {
     //기권, 승리
     @SendTo("/topic/game/{gameId}/end")
     @MessageMapping("/game/{gameId}/end")
-    public PlayEndResponse handleGame(@DestinationVariable String gameId, @Payload PlayEndResponse playEndResponse, SimpMessageHeaderAccessor headerAccessor) {
+    public PlayEndResponse handleGame(@DestinationVariable String gameId,
+                                      @Payload PlayEndResponse playEndResponse,
+                                      SimpMessageHeaderAccessor headerAccessor) {
         String lossPlayer = headerAccessor.getSessionId();
         Players players = playersMap.get(gameId);
-        String lossPlayerName = players.getPlayerSession1().equals(lossPlayer)? players.getPlayerName1():players.getPlayerName2();
-        String winPlayerName = lossPlayerName.equals(players.getPlayerName1())? players.getPlayerName2():players.getPlayerName1();
+        String session1 = players.getPlayerSession1();
+        String playerName1 = players.getPlayerName1();
+        String playerName2 = players.getPlayerName2();
+        String lossPlayerName = lossPlayer.equals(session1)? playerName1:playerName2;
+        String winPlayerName = !lossPlayer.equals(session1)? playerName1:playerName2;
+
         userRepository.incrementLossByUsername(lossPlayerName);
         userRepository.incrementWinByUsername(winPlayerName);
-
         gameRepository.setWinnerById(Long.parseLong(gameId),winPlayerName);
         playersMap.remove(gameId);
         playEndResponse.setWinner(winPlayerName);
