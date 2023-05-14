@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class GameMessage
+public class PlayMessage
 
 {
     private String content;

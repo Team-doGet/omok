@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 public class MatchResponse {
 
     private String content;
-    private Integer room;
     private String player1;
     private String player2;
     private UserInfo playerInfo1;

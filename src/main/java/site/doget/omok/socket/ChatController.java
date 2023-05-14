@@ -8,11 +8,10 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.socket.WebSocketSession;
+import site.doget.omok.Game.Game;
+import site.doget.omok.Game.GameRepository;
 
-import java.security.Principal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -23,17 +22,20 @@ public class ChatController {
 
     @Autowired
     private UserManager userManager;
-    private int gameRoom = 1;
+
+    @Autowired
+    private GameRepository gameRepository;
+    private final Queue<String> matchQueue = new ConcurrentLinkedQueue<>();
 
     @MessageMapping("/lobby/join")
     @SendTo("/topic/chatParticipants")
     public UserListMessage joinChat(UserInfo userInfo, SimpMessageHeaderAccessor headerAccessor) throws JsonProcessingException {
         String username = userInfo.getSender();
         String userSessionId = headerAccessor.getSessionId();
-        userManager.addUser(userSessionId, userInfo);
+        UserManager.addUser(userSessionId, userInfo);
         UserListMessage msg = new UserListMessage();
         msg.setSender("system");
-        msg.setUserList(userManager.getAllUserList());
+        msg.setUserList(UserManager.getAllUserList());
         return msg;
     }
 
@@ -42,12 +44,13 @@ public class ChatController {
     public UserListMessage leaveChat(UserInfo userInfo, SimpMessageHeaderAccessor headerAccessor) {
         String username = userInfo.getSender();
         String userSessionId = headerAccessor.getSessionId();
-        userManager.removeUser(userSessionId);
+        UserManager.removeUser(userSessionId);
         UserListMessage msg = new UserListMessage();
         msg.setSender("system");
-        msg.setUserList(userManager.getAllUserList());
+        msg.setUserList(UserManager.getAllUserList());
         return msg;
     }
+
     @MessageMapping("/lobby/chat")
     @SendTo("/topic/public") // 구독 중인 클라이언트에게 메시지 전송
     public ChatMessage sendMessage(@Payload ChatMessage chatMessage) {
@@ -55,23 +58,22 @@ public class ChatController {
         return chatMessage;
     }
 
-    private Queue<String> matchQueue = new ConcurrentLinkedQueue<>();
-
     @SendTo("/topic/public")
     @MessageMapping("/lobby/matchMessage")
-    public ChatMessage matchMessage(@Payload ChatMessage matchRequest,UserInfo userInfo){
+    public ChatMessage matchMessage(@Payload ChatMessage matchRequest, UserInfo userInfo) {
         matchRequest.setSender("system");
         matchRequest.setTime(LocalDateTime.now());
         return matchRequest;
     }
+
     @SendTo("/topic/match")
     @MessageMapping("/lobby/match")
-    public MatchResponse matchRequest(@Payload MatchRequest matchRequest,UserInfo userInfo, SimpMessageHeaderAccessor headerAccessor) {
+    public MatchResponse matchRequest(@Payload MatchRequest matchRequest, UserInfo userInfo, SimpMessageHeaderAccessor headerAccessor) {
         String userSessionId = headerAccessor.getSessionId();
         // 매칭 신청한 유저를 큐에 추가
         matchQueue.offer(userSessionId);
         if (matchQueue.size() == 2) {
-            return createGameRoom(gameRoom++);
+            return createGame();
         }
         MatchResponse matchResponse = new MatchResponse();
         matchRequest.setSender("system");
@@ -79,16 +81,23 @@ public class ChatController {
         return matchResponse;
     }
 
-    private MatchResponse createGameRoom(int roomNumber) {
+    private MatchResponse createGame() {
         String playerSessionId1 = matchQueue.poll();
         String playerSessionId2 = matchQueue.poll();
+        UserInfo player1 = UserManager.getUser(playerSessionId1);
+        UserInfo player2 = UserManager.getUser(playerSessionId2);
+
+        Game game = new Game();
+        game.setPlayer1(player1.getSender());
+        game.setPlayer2(player2.getSender());
+        game.setWinner("");
+        this.gameRepository.save(game);
 
         MatchResponse matchResponse = new MatchResponse();
-        matchResponse.setRoom(roomNumber);
         matchResponse.setPlayer1(playerSessionId1);
         matchResponse.setPlayer2(playerSessionId2);
-        matchResponse.setPlayerInfo1(userManager.getUser(playerSessionId1));
-        matchResponse.setPlayerInfo2(userManager.getUser(playerSessionId2));
+        matchResponse.setPlayerInfo1(player1);
+        matchResponse.setPlayerInfo2(player2);
         matchResponse.setTime(LocalDateTime.now());
         matchResponse.setSender("system");
         matchResponse.setContent("경기가 시작됩니다.");

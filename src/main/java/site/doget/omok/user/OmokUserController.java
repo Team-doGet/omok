@@ -6,9 +6,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-
-import java.util.Map;
 
 @Controller
 public class OmokUserController {
@@ -35,19 +32,7 @@ public class OmokUserController {
             }
             model.addAttribute("user", user);
         }
-
         return "index";
-    }
-    @GetMapping("/play/{gameId}")
-    public String getPlay(Model model, @AuthenticationPrincipal OAuth2User principal,@PathVariable String gameId){
-        String username = principal.getAttribute("login");
-        OmokUser user = userRepository.findByUsername(username);
-        model.addAttribute("user", user);
-        return "play";
-    }
-    @GetMapping("/login")
-    public String login() {
-        return "login";
     }
 
 }
