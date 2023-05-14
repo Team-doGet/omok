@@ -8,7 +8,10 @@ import lombok.Setter;
 public class PlayMessage
 
 {
-    private String content;
+    private String stone;
+    private Integer x;
+    private Integer y;
+    private Integer turn;
     private String sender;
 
 }

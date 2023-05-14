@@ -21,6 +21,7 @@ public class GameController {
         Optional<Game> og  =gameRepository.findTopByWinnerAndPlayer1OrWinnerAndPlayer2OrderByIdDesc("",username,"",username);
         if(og.isPresent()) {
             Game game = og.get();
+            System.out.println(game);
             model.addAttribute("user", username);
             model.addAttribute("game", game);
         return "play";

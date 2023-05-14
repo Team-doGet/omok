@@ -122,9 +122,87 @@
         <span id="p2" th:text="${game.player2}">Player2</span>
       </h3>
       <div id="board"></div>
-      <button id="cancel-button" class="button cancel-button">기권</button>
+      <button
+        id="cancel-button"
+        class="button cancel-button"
+        onclick="sendEnd()"
+      >
+        기권
+      </button>
     </div>
     <script>
+      let stompClient = null;
+      const connect = (board, userA, userB) => {
+        //소켓
+        const socket = new SockJS("/ws");
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+          stompClient.subscribe(
+            "/topic/game/[[${game.id}]]",
+            function (message) {
+              const { sender, turn, x, y, stone } = JSON.parse(message.body);
+              if (sender !== "[[${user}]]") {
+                Omok.turn = turn;
+                board.setStone(x, y, stone);
+                board.print();
+                if (board.checkVictory(x, y, stone)) {
+                  sendEnd(winner, stone);
+                  return;
+                }
+                Omok.play(board, userA, userB);
+              }
+            }
+          );
+          stompClient.subscribe(
+            "/topic/game/[[${game.id}]]/end",
+            function (message) {
+              const { winner, stone } = JSON.parse(message.body);
+              alert(winner + " " + "님이 승리하였습니다. 게임을 종료합니다.");
+              location.href = "/";
+            }
+          );
+          const url = stompClient["ws"]["_transport"]["url"];
+          const urlObject = new URL(url);
+          const sessionId = urlObject.pathname.split("/")[3];
+          const destination = "/app/game/[[${game.id}]]/join";
+          const message = JSON.stringify({
+            playerName1: "[[${game.player1}]]",
+            playerName2: "[[${game.player2}]]",
+            playerSession1:
+              "[[${user}]]" === "[[${game.player1}]]" ? sessionId : "",
+            playerSession2:
+              "[[${user}]]" === "[[${game.player2}]]" ? sessionId : "",
+          });
+          stompClient.send(destination, {}, message);
+        });
+      };
+
+      const sendSetStone = (position, stone, turn) => {
+        const destination = "/app/game/[[${game.id}]]/setStone";
+        const [x, y] = position;
+        const message = JSON.stringify({
+          sender: "[[${user}]]",
+          x,
+          y,
+          stone,
+          turn,
+        });
+        stompClient.send(destination, {}, message);
+      };
+      const sendEnd = (winner, stone) => {
+        const destination = "/app/game/[[${game.id}]]/end";
+        stompClient.send(
+          destination,
+          {},
+          JSON.stringify({
+            sender: "[[${user}]]",
+            loss: "[[${user}]]",
+            stone,
+            winner,
+          })
+        );
+      };
+
       class Player {
         constructor(name, stone) {
           this.name = name;
@@ -138,7 +216,6 @@
           this.map = new Array(size)
             .fill()
             .map(() => new Array(size).fill(true));
-          console.log(this.map);
         }
         print() {
           const board = document.getElementById("board");
@@ -198,26 +275,30 @@
       }
 
       class Omok {
-        static play(turn, board, userA, userB) {
+        static turn = 0;
+        static play(board, userA, userB) {
           const point = document.querySelectorAll(".tyle");
           point.forEach((element) => {
             element.addEventListener("click", (event) => {
-              let player = turn % 2 == 0 ? userA : userB;
-              const position = element.value.split("/").map((e) => {
-                return Number(e);
-              });
-              if (!board.setStone(...position, player.stone)) {
-                alert("둘 수 없는 자리입니다.");
-                return;
+              let player = this.turn % 2 == 0 ? userA : userB;
+              if (player.name === "[[${user}]]") {
+                const position = element.value.split("/").map((e) => {
+                  return Number(e);
+                });
+                if (!board.setStone(...position, player.stone)) {
+                  alert("둘 수 없는 자리입니다.");
+                  return;
+                }
+                board.print();
+                sendSetStone(position, player.stone, ++Omok.turn);
+                if (board.checkVictory(...position, player.stone)) {
+                  alert(
+                    player.name + "님이 승리하였습니다. 게임을 종료합니다."
+                  );
+                  this.end();
+                  return;
+                }
               }
-              board.print();
-              turn++;
-              if (board.checkVictory(...position, player.stone)) {
-                alert(player.name + player.stone + "승! 게임 종료");
-                this.end();
-                return;
-              }
-              this.play(turn, board, userA, userB);
             });
           });
         }
@@ -231,44 +312,13 @@
           let userA = new Player("[[${game.player1}]]", "⚫");
           let userB = new Player("[[${game.player2}]]", "⚪");
           let board = new Board(19);
+          connect(board, userA, userB);
           board.print();
-          let turn = 0;
-          this.play(turn, board, userA, userB);
+          this.play(board, userA, userB);
         }
       }
-      Omok.main();
 
-      function connect() {
-        //소켓
-        const socket = new SockJS("/ws");
-        const stompClient = Stomp.over(socket);
-        stompClient.connect({}, function (frame) {
-          console.log("Connected: " + frame);
-          stompClient.subscribe(
-            "/topic/game/[[${game.id}]]",
-            function (message) {
-              const receivedMove = JSON.parse(message.body);
-              // 받은 메시지를 사용하여 필요한 작업을 수행합니다.
-            }
-          );
-          const url = stompClient["ws"]["_transport"]["url"];
-          const urlObject = new URL(url);
-          console.log(url, urlObject);
-          const sessionId = urlObject.pathname.split("/")[3];
-          const destination = "/app/game/[[${game.id}]]/join";
-          const message = JSON.stringify({
-            playerName1: "[[${game.player1}]]",
-            playerName2: "[[${game.player2}]]",
-            playerSession1:
-              "[[${user}]]" === "[[${game.player1}]]" ? sessionId : "",
-            playerSession2:
-              "[[${user}]]" === "[[${game.player2}]]" ? sessionId : "",
-          });
-          stompClient.send(destination, {}, message);
-        });
-      }
-      connect();
-      console.log("");
+      Omok.main();
     </script>
   </body>
 </html>
