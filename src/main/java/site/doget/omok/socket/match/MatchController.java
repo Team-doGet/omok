@@ -24,17 +24,23 @@ public class MatchController {
 
     @MessageMapping("/lobby/match")
     @SendTo("/topic/match")
-    public MatchResponseDTO matchRequest(@Payload MatchMessageDTO matchMessageDTO, SimpMessageHeaderAccessor headerAccessor) {
+    public MatchResponseDTO matchRequest(@Payload MatchMessageDTO matchMessage, SimpMessageHeaderAccessor headerAccessor) {
         String userSessionId = headerAccessor.getSessionId();
-        // 매칭 신청한 유저를 큐에 추가
-        matchManager.addSocketId(userSessionId);
-        if (matchManager.queueSize() == 2) {
-            return createGame();
+        if ("start".equals(matchMessage.getType())) {
+            // 매칭 신청한 유저를 큐에 추가
+            matchManager.addSocketId(userSessionId);
+            if (matchManager.queueSize() == 2) {
+                return createGame();
+            }
         }
-        MatchResponseDTO matchResponseDTO = new MatchResponseDTO();
-        matchMessageDTO.setSender("system");
-        matchMessageDTO.setTime(LocalDateTime.now());
-        return matchResponseDTO;
+        if ("cancel".equals(matchMessage.getType())) {
+            matchManager.removeSocketId(userSessionId);
+        }
+
+        MatchResponseDTO matchResponse = new MatchResponseDTO();
+        matchResponse.setSender("system");
+        matchResponse.setTime(LocalDateTime.now());
+        return matchResponse;
     }
 
     private MatchResponseDTO createGame() {

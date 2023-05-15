@@ -16,7 +16,10 @@ public class MatchManager {
 
     // 소켓 삭제
     public void removeSocketId(String socketId) {
-        matchQueue.remove(socketId);
+        boolean isContains = matchQueue.contains(socketId);
+        if (isContains) {
+            matchQueue.remove(socketId);
+        }
     }
 
     // 소켓 꺼내기
