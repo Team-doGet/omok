@@ -22,6 +22,11 @@ public class MatchManager {
         }
     }
 
+    // 첫 요소 가져오기
+    public String queuePeek() {
+        return matchQueue.peek();
+    }
+
     // 소켓 꺼내기
     public String queuePoll() {
         return matchQueue.poll();

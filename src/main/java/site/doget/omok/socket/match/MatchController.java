@@ -25,16 +25,23 @@ public class MatchController {
     @MessageMapping("/lobby/match")
     @SendTo("/topic/match")
     public MatchResponseDTO matchRequest(@Payload MatchMessageDTO matchMessage, SimpMessageHeaderAccessor headerAccessor) {
-        String userSessionId = headerAccessor.getSessionId();
+        String socketId = headerAccessor.getSessionId();
         if ("start".equals(matchMessage.getType())) {
             // 매칭 신청한 유저를 큐에 추가
-            matchManager.addSocketId(userSessionId);
-            if (matchManager.queueSize() == 2) {
-                return createGame();
+            if (matchManager.queueSize() > 0) {
+                UserInfoDTO player1 = userManager.getUser(socketId);
+                String playerSocketId2 = matchManager.queuePeek();
+                UserInfoDTO player2 = userManager.getUser(playerSocketId2);
+                String playerName1 = player1.getSender();
+                String playerName2 = player2.getSender();
+                if (!playerName1.equals(playerName2)) {
+                    return createGame(socketId, player1);
+                }
             }
+            matchManager.addSocketId(socketId);
         }
         if ("cancel".equals(matchMessage.getType())) {
-            matchManager.removeSocketId(userSessionId);
+            matchManager.removeSocketId(socketId);
         }
 
         MatchResponseDTO matchResponse = new MatchResponseDTO();
@@ -43,11 +50,9 @@ public class MatchController {
         return matchResponse;
     }
 
-    private MatchResponseDTO createGame() {
-        String playerSessionId1 = matchManager.queuePoll();
-        String playerSessionId2 = matchManager.queuePoll();
-        UserInfoDTO player1 = userManager.getUser(playerSessionId1);
-        UserInfoDTO player2 = userManager.getUser(playerSessionId2);
+    private MatchResponseDTO createGame(String playerSocketId1, UserInfoDTO player1) {
+        String playerSocketId2 = matchManager.queuePoll();
+        UserInfoDTO player2 = userManager.getUser(playerSocketId2);
 
         Game game = new Game();
         game.setPlayer1(player1.getSender());
@@ -56,8 +61,8 @@ public class MatchController {
         this.gameRepository.save(game);
 
         MatchResponseDTO matchResponseDTO = new MatchResponseDTO();
-        matchResponseDTO.setPlayer1(playerSessionId1);
-        matchResponseDTO.setPlayer2(playerSessionId2);
+        matchResponseDTO.setPlayer1(playerSocketId1);
+        matchResponseDTO.setPlayer2(playerSocketId2);
         matchResponseDTO.setPlayerInfo1(player1);
         matchResponseDTO.setPlayerInfo2(player2);
         matchResponseDTO.setTime(LocalDateTime.now());
