@@ -16,12 +16,12 @@ public class PlayManager {
     }
 
     // 참가자 관련
-    public void setPlayer1SessionId(String gameId, String sessionId) {
-        play.get(gameId).setPlayerSession1(sessionId);
+    public void setPlayer1SessionId(String gameId, String socketId) {
+        play.get(gameId).setPlayerSession1(socketId);
     }
 
-    public void setPlayer2SessionId(String gameId, String sessionId) {
-        play.get(gameId).setPlayerSession2(sessionId);
+    public void setPlayer2SessionId(String gameId, String socketId) {
+        play.get(gameId).setPlayerSession2(socketId);
     }
 
     public String getPlayerSessionId1(String gameId) {
