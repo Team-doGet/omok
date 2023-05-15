@@ -16,23 +16,23 @@ import java.util.Map;
 @Controller
 @RequiredArgsConstructor
 public class PlayController {
-    private final Map<String, PlayersRequestDTO> playersMap = new HashMap<>();
+    private final PlayManager playersMap;
     private final OmokUserRepository userRepository;
     private final GameRepository gameRepository;
 
     @MessageMapping("/game/{gameId}/join")
     @SendTo("/topic/game/{gameId}")
     public void handleGameJoin(@DestinationVariable String gameId, PlayersRequestDTO playersRequest) {
-        if (playersMap.get(gameId) == null) {
-            playersMap.put(gameId, playersRequest);
+        if (playersMap.getPlayersRequest(gameId) == null) {
+            playersMap.putGame(gameId, playersRequest);
         } else {
             String session1 = playersRequest.getPlayerSession1();
             if (!"".equals(session1)) {
-                playersMap.get(gameId).setPlayerSession1(playersRequest.getPlayerSession1());
+                playersMap.getPlayersRequest(gameId).setPlayerSession1(playersRequest.getPlayerSession1());
             }
             String session2 = playersRequest.getPlayerSession2();
             if (!"".equals(session2)) {
-                playersMap.get(gameId).setPlayerSession2(playersRequest.getPlayerSession2());
+                playersMap.getPlayersRequest(gameId).setPlayerSession2(playersRequest.getPlayerSession2());
             }
         }
     }
@@ -41,17 +41,17 @@ public class PlayController {
     @SendTo("/topic/game/{gameId}/end")
     public PlayEndMessageDTO handleGame(@DestinationVariable String gameId, @Payload PlayEndMessageDTO playEndMessage, SimpMessageHeaderAccessor headerAccessor) {
         String lossPlayer = headerAccessor.getSessionId();
-        PlayersRequestDTO playersRequestDTO = playersMap.get(gameId);
-        String session1 = playersRequestDTO.getPlayerSession1();
-        String playerName1 = playersRequestDTO.getPlayerName1();
-        String playerName2 = playersRequestDTO.getPlayerName2();
+        String session1 = playersMap.getPlayerSessionId1(gameId);
+        String playerName1 = playersMap.getPlayerName1(gameId);
+        String playerName2 = playersMap.getPlayerName2(gameId);
         String lossPlayerName = lossPlayer.equals(session1) ? playerName1 : playerName2;
         String winPlayerName = !lossPlayer.equals(session1) ? playerName1 : playerName2;
 
         userRepository.incrementLossByUsername(lossPlayerName);
         userRepository.incrementWinByUsername(winPlayerName);
         gameRepository.setWinnerById(Long.parseLong(gameId), winPlayerName);
-        playersMap.remove(gameId);
+
+        playersMap.removeGame(gameId);
         playEndMessage.setWinner(winPlayerName);
         playEndMessage.setSender("system");
         playEndMessage.setContent("게임 종료");
