@@ -146,7 +146,7 @@
                 board.setStone(x, y, stone);
                 board.print();
                 if (board.checkVictory(x, y, stone)) {
-                  sendEnd(winner, stone);
+                  sendEnd(sender, stone);
                   return;
                 }
                 Omok.play(board, userA, userB);
