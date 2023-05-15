@@ -1,15 +1,15 @@
-package site.doget.omok.socket;
+package site.doget.omok.socket.match;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Data
-public class MatchRequest {
-
+@Setter
+@Getter
+public class MatchMessageDTO {
     private String content;
     private String type;
     private String sender;
     private LocalDateTime time;
-
 }
