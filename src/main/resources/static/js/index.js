@@ -45,7 +45,6 @@ function showMessage(message) {
 function displayChatParticipants(participants) {
     var participantsList = document.getElementById("participants-list");
     participantsList.innerHTML = ""; // 기존 목록 초기화
-    console.log(participants);
     participants.forEach((participant) => {
         var participantItem = document.createElement("div");
         participantItem.classList.add("user-list-item");
