@@ -1,5 +1,5 @@
 # omok
-
+[배포링크](http://omok.doget.site)
 ![Practice3_OmokApp_Team1_1](https://github.com/Team-doGet/omok/assets/106823684/14ee48ce-f8ae-485e-bbd7-0c7981ed5455)
 
 ## 아키텍처
