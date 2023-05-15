@@ -19,5 +19,4 @@ public class OmokUser {
     private String email;
     private Long win;
     private Long loss;
-
 }
